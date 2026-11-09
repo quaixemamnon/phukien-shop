@@ -1,4 +1,5 @@
 require('dotenv').config();
+const fs = require('fs');
 const path = require('path');
 const express = require('express');
 const cors = require('cors');
@@ -8,6 +9,7 @@ const { notFound, errorHandler } = require('./middlewares/error');
 const { startOrderJobs } = require('./jobs/orderJobs');
 
 const app = express();
+app.set('trust proxy', 1); // chạy sau proxy của Render/Cloudflare: lấy đúng IP và giao thức https
 
 const allowedOrigins = (process.env.CLIENT_URL || '').split(',').map((s) => s.trim()).filter(Boolean);
 app.use(cors({ origin: allowedOrigins.length ? allowedOrigins : true }));
@@ -31,11 +33,26 @@ app.use('/api/reviews', require('./routes/reviewRoutes'));
 app.use('/api/upload', require('./routes/uploadRoutes'));
 app.use('/api/admin', require('./routes/adminRoutes'));
 
+// Khi triển khai 1 dịch vụ (Render): backend phục vụ luôn giao diện React đã build (frontend/dist)
+const distDir = path.join(__dirname, '..', '..', 'frontend', 'dist');
+if (fs.existsSync(path.join(distDir, 'index.html'))) {
+  app.use(express.static(distDir, { index: false, maxAge: '1h' }));
+  app.get(/^\/(?!api\/|uploads\/).*/, (req, res) => res.sendFile(path.join(distDir, 'index.html')));
+  console.log('Đang phục vụ giao diện từ frontend/dist');
+}
+
 app.use(notFound);
 app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
-connectDB().then(() => {
-  app.listen(PORT, () => console.log(`API đang chạy tại http://localhost:${PORT}`));
+connectDB().then(async () => {
+  if (process.env.AUTO_SEED === 'true') {
+    try {
+      await require('./seed').seedIfEmpty();
+    } catch (err) {
+      console.error('Tự tạo dữ liệu mẫu thất bại:', err.message);
+    }
+  }
+  app.listen(PORT, () => console.log(`Server đang chạy tại cổng ${PORT}`));
   startOrderJobs();
 });

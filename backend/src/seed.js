@@ -86,12 +86,29 @@ async function fullSeed() {
   console.log('  Khách hàng: khachhang@phukien.vn / Khach@123');
 }
 
-(async () => {
-  await mongoose.connect(process.env.MONGO_URI);
-  if (process.argv.includes('--images-only')) await imagesOnly();
-  else await fullSeed();
-  await mongoose.disconnect();
-})().catch((err) => {
-  console.error(err);
-  process.exit(1);
-});
+// Dùng khi triển khai: server tự tạo dữ liệu mẫu nếu database còn trống (AUTO_SEED=true)
+async function seedIfEmpty() {
+  if ((await Product.estimatedDocumentCount()) > 0 || (await User.estimatedDocumentCount()) > 0) return false;
+  console.log('Database trống, đang tạo dữ liệu mẫu...');
+  // Trên máy chủ thật không dùng mật khẩu admin mặc định (đã công khai trong README)
+  if (process.env.NODE_ENV === 'production' && !process.env.SEED_ADMIN_PASSWORD) {
+    process.env.SEED_ADMIN_PASSWORD = require('crypto').randomBytes(6).toString('base64url');
+    console.log(`Chưa đặt SEED_ADMIN_PASSWORD, mật khẩu admin được tạo ngẫu nhiên: ${process.env.SEED_ADMIN_PASSWORD}`);
+  }
+  await fullSeed();
+  return true;
+}
+
+module.exports = { seedIfEmpty };
+
+if (require.main === module) {
+  (async () => {
+    await mongoose.connect(process.env.MONGO_URI);
+    if (process.argv.includes('--images-only')) await imagesOnly();
+    else await fullSeed();
+    await mongoose.disconnect();
+  })().catch((err) => {
+    console.error(err);
+    process.exit(1);
+  });
+}

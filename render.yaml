@@ -1,0 +1,25 @@
+# Cấu hình triển khai lên Render (https://render.com) - 1 dịch vụ chạy cả backend và giao diện React
+# Render Dashboard -> New -> Blueprint -> chọn repo này -> điền MONGO_URI và SEED_ADMIN_PASSWORD -> Apply
+services:
+  - type: web
+    name: phukien-shop
+    runtime: node
+    plan: free
+    buildCommand: npm --prefix frontend ci --include=dev && npm --prefix frontend run build && npm --prefix backend ci --omit=dev
+    startCommand: npm --prefix backend start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: MONGO_URI # chuỗi kết nối MongoDB Atlas
+        sync: false
+      - key: SEED_ADMIN_PASSWORD # mật khẩu cho tài khoản admin@phukien.vn
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRES
+        value: 7d
+      - key: AUTO_SEED # tự tạo dữ liệu mẫu khi database trống
+        value: "true"
+      - key: MOMO_MODE
+        value: mock

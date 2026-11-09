@@ -6,7 +6,6 @@
 //          Dữ liệu trả về có cùng định dạng và cùng cách ký HMAC SHA256 như MoMo thật,
 //          nên phần kiểm tra chữ ký / cập nhật đơn hàng được chạy giống hệt khi dùng cổng thật.
 const crypto = require('crypto');
-const { clientUrl } = require('./helpers');
 
 const isMock = () => String(process.env.MOMO_MODE || '').toLowerCase() === 'mock';
 
@@ -44,7 +43,8 @@ async function createPayment({ amount, orderId, orderInfo }) {
 
   // Chế độ mô phỏng: chuyển khách sang trang cổng MoMo mô phỏng của website
   if (isMock()) {
-    return `${clientUrl()}/payment/momo-sandbox?orderId=${encodeURIComponent(orderId)}`;
+    // Đường dẫn tương đối: chạy đúng dù website mở bằng localhost hay tên miền thật
+    return `/payment/momo-sandbox?orderId=${encodeURIComponent(orderId)}`;
   }
 
   const { partnerCode, accessKey } = config();

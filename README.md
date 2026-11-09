@@ -118,6 +118,19 @@ Khi chạy dev, Vite tự chuyển các request `/api` sang `http://localhost:50
 
 ## 6. Triển khai lên Internet (miễn phí)
 
+### Cách nhanh: 1 dịch vụ trên Render (khuyên dùng)
+
+Repo đã có sẵn `render.yaml`. Backend sẽ phục vụ luôn giao diện React, nên chỉ cần 1 dịch vụ và 1 đường link.
+
+1. Tạo database miễn phí trên **MongoDB Atlas** (cluster M0), tạo database user, mục *Network Access* thêm `0.0.0.0/0`, lấy chuỗi kết nối dạng `mongodb+srv://user:pass@cluster.xxxxx.mongodb.net/phukien_shop`.
+2. Vào https://dashboard.render.com → **New** → **Blueprint** → chọn repo `phukien-shop`.
+3. Điền `MONGO_URI` (chuỗi ở bước 1) và `SEED_ADMIN_PASSWORD` (mật khẩu admin bạn muốn) → **Apply**.
+4. Chờ build khoảng 3–5 phút. Lần chạy đầu server tự tạo dữ liệu mẫu. Link có dạng `https://phukien-shop-xxxx.onrender.com`.
+
+Gói miễn phí của Render sẽ “ngủ” sau 15 phút không có ai truy cập; lần mở tiếp theo mất khoảng 30–50 giây để khởi động lại.
+
+### Cách tách riêng frontend (Vercel) và backend (Render)
+
 1. **Database – MongoDB Atlas:** tạo cluster M0 miễn phí, tạo user, ở mục *Network Access* cho phép `0.0.0.0/0`, copy chuỗi kết nối vào `MONGO_URI`.
 2. **Backend – Render (https://render.com):** New → Web Service → chọn repo GitHub, *Root Directory* `backend`, *Build Command* `npm install`, *Start Command* `npm start`. Thêm các biến môi trường như trong `.env` (đổi `CLIENT_URL` thành địa chỉ frontend, `SERVER_URL` thành địa chỉ Render, `VNP_RETURN_URL`, `MOMO_REDIRECT_URL` thành địa chỉ frontend, `MOMO_IPN_URL` thành địa chỉ backend). Nên dùng Cloudinary vì ổ đĩa của Render bị xóa khi khởi động lại.
 3. **Frontend – Vercel (https://vercel.com):** Import repo, *Root Directory* `frontend`, framework Vite. Thêm biến `VITE_API_URL=https://<ten-backend>.onrender.com/api`. File `vercel.json` đã cấu hình để các đường dẫn của React Router không bị lỗi 404.
