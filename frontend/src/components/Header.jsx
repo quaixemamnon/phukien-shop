@@ -61,6 +61,11 @@ export default function Header() {
               <Link className="btn outline" to="/register">Đăng ký</Link>
             </>
           )}
+          {user && !isAdmin && (
+            <Link to="/orders" className="cart-link" aria-label="Đơn mua">
+              📦 <span>Đơn mua</span>
+            </Link>
+          )}
           {!isAdmin && (
             <Link to="/cart" className="cart-link" aria-label="Giỏ hàng">
               🛒 <span>Giỏ hàng</span>

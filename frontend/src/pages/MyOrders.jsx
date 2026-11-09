@@ -16,6 +16,7 @@ export default function MyOrders() {
   return (
     <>
       <h1>Đơn hàng của tôi</h1>
+      <p className="muted small">Bấm vào một đơn để xem chi tiết. Khi đơn chuyển sang “Đã giao”, bạn có thể đánh giá từng sản phẩm trong trang chi tiết đơn.</p>
       <div className="tabs">
         <button className={!status ? 'active' : ''} onClick={() => setStatus('')}>Tất cả</button>
         {Object.entries(ORDER_STATUS).map(([k, v]) => (

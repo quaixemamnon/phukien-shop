@@ -76,7 +76,7 @@ exports.getProductBySlug = asyncHandler(async (req, res) => {
 // GET /api/products/:id/reviews
 exports.getProductReviews = asyncHandler(async (req, res) => {
   const reviews = await Review.find({ product: req.params.id, isHidden: false })
-    .populate('user', 'fullName avatar')
+    .populate('user', 'fullName')
     .sort({ createdAt: -1 })
     .limit(50);
   res.json(reviews);

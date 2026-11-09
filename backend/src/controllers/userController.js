@@ -8,7 +8,7 @@ exports.getMe = asyncHandler(async (req, res) => {
 
 // PUT /api/users/me
 exports.updateMe = asyncHandler(async (req, res) => {
-  const data = pick(req.body, ['fullName', 'phone', 'avatar']);
+  const data = pick(req.body, ['fullName', 'phone']);
   if (data.phone === '') data.phone = undefined;
   Object.assign(req.user, data);
   await req.user.save();

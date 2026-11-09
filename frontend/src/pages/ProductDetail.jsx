@@ -98,7 +98,7 @@ export default function ProductDetail() {
 
         <section className="card pad">
           <h2>Đánh giá ({reviews.length})</h2>
-          {reviews.length === 0 && <p className="muted">Chưa có đánh giá. Khách hàng đã mua sản phẩm có thể đánh giá trong mục Đơn hàng của tôi.</p>}
+          {reviews.length === 0 && <p className="muted">Chưa có đánh giá. Khách hàng đã mua và nhận hàng có thể đánh giá trong mục Đơn mua → chi tiết đơn hàng.</p>}
           {reviews.map((r) => (
             <div key={r._id} className="review">
               <b>{r.user?.fullName || 'Khách hàng'}</b> <Stars value={r.rating} />

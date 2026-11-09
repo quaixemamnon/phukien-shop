@@ -7,7 +7,7 @@ import { fullAddress } from '../utils/format';
 
 function InfoTab() {
   const { user, setUser } = useAuth();
-  const [form, setForm] = useState({ fullName: user.fullName, phone: user.phone || '', avatar: user.avatar || '' });
+  const [form, setForm] = useState({ fullName: user.fullName, phone: user.phone || '' });
   const save = async (e) => {
     e.preventDefault();
     if (form.phone && !/^0\d{9}$/.test(form.phone)) return toast.error('Số điện thoại không hợp lệ');
@@ -23,9 +23,7 @@ function InfoTab() {
     <form className="form narrow" onSubmit={save}>
       <label>Email<input value={user.email} disabled /></label>
       <label>Họ và tên<input id="pf-name" value={form.fullName} onChange={(e) => setForm({ ...form, fullName: e.target.value })} /></label>
-      <label>Số điện thoại<input id="pf-phone" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></label>
-      <label>Ảnh đại diện (URL)<input id="pf-avatar" value={form.avatar} onChange={(e) => setForm({ ...form, avatar: e.target.value })} /></label>
-      <button className="btn primary">Lưu thay đổi</button>
+      <label>Số điện thoại<input id="pf-phone" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></label>      <button className="btn primary">Lưu thay đổi</button>
     </form>
   );
 }
