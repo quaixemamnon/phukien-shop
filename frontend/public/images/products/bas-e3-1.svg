@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="600" height="600">
+  <defs><radialGradient id="g" cx="50%" cy="40%" r="75%"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#e6eaee"/></radialGradient></defs>
+  <rect width="600" height="600" fill="url(#g)"/>
+  <ellipse cx="300" cy="515" rx="170" ry="18" fill="#000" opacity=".08"/>
+  
+    <rect x="170" y="290" width="260" height="170" rx="80" fill="#f4f5f7"/>
+    <path d="M170 360 H430" stroke="#d1d2d4" stroke-width="5"/>
+    <circle cx="300" cy="410" r="7" fill="#9aa5ae"/>
+    <g transform="translate(165 110) rotate(28)"><rect x="28" y="40" width="26" height="110" rx="13" fill="#feffff" stroke="#d6d7d9" stroke-width="3"/><circle cx="40" cy="40" r="44" fill="#feffff" stroke="#d6d7d9" stroke-width="3"/><circle cx="40" cy="40" r="18" fill="#9aa5ae"/></g>
+    <g transform="translate(355 110) rotate(-28)"><rect x="26" y="40" width="26" height="110" rx="13" fill="#feffff" stroke="#d6d7d9" stroke-width="3"/><circle cx="40" cy="40" r="44" fill="#feffff" stroke="#d6d7d9" stroke-width="3"/><circle cx="40" cy="40" r="18" fill="#9aa5ae"/></g>
+  <text x="40" y="70" font-family="Arial, Helvetica, sans-serif" font-size="30" font-weight="700" fill="#1f3b57" letter-spacing="3">BASEUS</text>
+  <rect x="40" y="520" width="126" height="44" rx="22" fill="#1f3b57"/><text x="58" y="550" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" fill="#fff">BT 5.0</text>
+</svg>

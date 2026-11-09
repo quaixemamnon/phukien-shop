@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="600" height="600">
+  <defs><radialGradient id="g" cx="50%" cy="40%" r="75%"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#e8edf1"/></radialGradient></defs>
+  <rect width="600" height="600" fill="url(#g)"/>
+  <ellipse cx="300" cy="515" rx="170" ry="18" fill="#000" opacity=".08"/>
+  
+    <rect x="195" y="105" width="210" height="380" rx="40" fill="#7d8ea0"/>
+    <rect x="210" y="120" width="36" height="350" rx="18" fill="#ffffff" opacity=".12"/>
+    <circle cx="268" cy="410" r="9" fill="#ffffff"/><circle cx="292" cy="410" r="9" fill="#ffffff"/><circle cx="316" cy="410" r="9" fill="#ffffff"/><circle cx="340" cy="410" r="9" fill="#a5b6c8"/>
+    <rect x="262" y="140" width="76" height="22" rx="11" fill="#506173"/>
+    <path d="M308 230 L278 300 H304 L292 360 L332 280 H306 Z" fill="#ffffff"/>
+  <text x="40" y="70" font-family="Arial, Helvetica, sans-serif" font-size="30" font-weight="700" fill="#1f3b57" letter-spacing="3">BASEUS</text>
+  
+</svg>

@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="600" height="600">
+  <defs><radialGradient id="g" cx="50%" cy="40%" r="75%"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#e8edf1"/></radialGradient></defs>
+  <rect width="600" height="600" fill="url(#g)"/>
+  <ellipse cx="300" cy="515" rx="170" ry="18" fill="#000" opacity=".08"/>
+  
+    <rect x="250" y="120" width="24" height="70" rx="6" fill="#9aa5ae"/><rect x="326" y="120" width="24" height="70" rx="6" fill="#9aa5ae"/>
+    <rect x="175" y="175" width="250" height="280" rx="48" fill="#f4f5f7"/>
+    <rect x="190" y="190" width="40" height="250" rx="20" fill="#ffffff" opacity=".12"/>
+    <rect x="262" y="250" width="76" height="28" rx="14" fill="#c7c8ca"/><rect x="274" y="259" width="52" height="10" rx="5" fill="#2fa36b"/>
+    <rect x="262" y="300" width="76" height="28" rx="14" fill="#c7c8ca"/><rect x="274" y="309" width="52" height="10" rx="5" fill="#2fa36b"/>
+    <rect x="270" y="350" width="60" height="32" rx="5" fill="#c7c8ca"/><rect x="280" y="360" width="40" height="12" rx="2" fill="#2fa36b"/>
+  <text x="40" y="70" font-family="Arial, Helvetica, sans-serif" font-size="30" font-weight="700" fill="#1f3b57" letter-spacing="3">UGREEN</text>
+  
+</svg>

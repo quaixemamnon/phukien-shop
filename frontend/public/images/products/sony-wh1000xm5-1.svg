@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="600" height="600">
+  <defs><radialGradient id="g" cx="50%" cy="40%" r="75%"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#d9dee3"/></radialGradient></defs>
+  <rect width="600" height="600" fill="url(#g)"/>
+  <ellipse cx="300" cy="515" rx="170" ry="18" fill="#000" opacity=".08"/>
+  
+    <path d="M150 330 C150 150 450 150 450 330" fill="none" stroke="#44484c" stroke-width="34" stroke-linecap="round"/>
+    <path d="M150 330 C150 150 450 150 450 330" fill="none" stroke="#2b2f33" stroke-width="20" stroke-linecap="round"/>
+    <rect x="105" y="290" width="100" height="160" rx="46" fill="#2b2f33"/>
+    <rect x="395" y="290" width="100" height="160" rx="46" fill="#2b2f33"/>
+    <rect x="160" y="305" width="34" height="130" rx="17" fill="#8a9199"/>
+    <rect x="406" y="305" width="34" height="130" rx="17" fill="#8a9199"/>
+    <rect x="118" y="300" width="22" height="50" rx="11" fill="#ffffff" opacity=".18"/>
+  <text x="40" y="70" font-family="Arial, Helvetica, sans-serif" font-size="30" font-weight="700" fill="#1f3b57" letter-spacing="3">SONY</text>
+  <rect x="40" y="520" width="81" height="44" rx="22" fill="#1f3b57"/><text x="58" y="550" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" fill="#fff">ANC</text>
+</svg>

@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="600" height="600">
+  <defs><radialGradient id="g" cx="50%" cy="40%" r="75%"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#e8edf1"/></radialGradient></defs>
+  <rect width="600" height="600" fill="url(#g)"/>
+  <ellipse cx="300" cy="515" rx="170" ry="18" fill="#000" opacity=".08"/>
+  
+    <path d="M300 110 C390 110 420 190 420 300 C420 420 370 480 300 480 C230 480 180 420 180 300 C180 190 210 110 300 110 Z" fill="#3a434c"/>
+    <path d="M300 110 V250 M180 250 C230 262 370 262 420 250" stroke="#121b24" stroke-width="5" fill="none"/>
+    <rect x="288" y="150" width="24" height="56" rx="12" fill="#3aa0d8"/>
+    <path d="M205 300 C205 220 225 160 260 135" stroke="#ffffff" stroke-width="14" opacity=".15" fill="none" stroke-linecap="round"/>
+  <text x="40" y="70" font-family="Arial, Helvetica, sans-serif" font-size="30" font-weight="700" fill="#1f3b57" letter-spacing="3">LOGITECH</text>
+  
+</svg>

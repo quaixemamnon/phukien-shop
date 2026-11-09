@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="600" height="600">
+  <defs><radialGradient id="g" cx="50%" cy="40%" r="75%"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#e1efe7"/></radialGradient></defs>
+  <rect width="600" height="600" fill="url(#g)"/>
+  <ellipse cx="300" cy="515" rx="170" ry="18" fill="#000" opacity=".08"/>
+  
+    <path d="M150 190 C150 90 330 90 330 190 C330 290 150 290 150 390 C150 490 330 490 330 390 C330 330 400 300 450 330" fill="none" stroke="#36414c" stroke-width="30" stroke-linecap="round"/>
+    <path d="M150 190 C150 90 330 90 330 190 C330 290 150 290 150 390 C150 490 330 490 330 390 C330 330 400 300 450 330" fill="none" stroke="#4a5560" stroke-width="20" stroke-linecap="round"/>
+    <g transform="translate(150 190) rotate(180)"><rect x="-26" y="0" width="52" height="80" rx="14" fill="#2c3742"/><rect x="-16" y="76" width="32" height="34" rx="8" fill="#b9c2c9"/><rect x="-26" y="10" width="52" height="10" fill="#2fa36b"/></g>
+    <g transform="translate(450 330) rotate(-60)"><rect x="-26" y="0" width="52" height="80" rx="14" fill="#2c3742"/><rect x="-14" y="76" width="28" height="34" rx="12" fill="#b9c2c9"/><rect x="-26" y="10" width="52" height="10" fill="#2fa36b"/></g>
+  <text x="40" y="70" font-family="Arial, Helvetica, sans-serif" font-size="30" font-weight="700" fill="#1f3b57" letter-spacing="3">UGREEN</text>
+  <rect x="40" y="520" width="96" height="44" rx="22" fill="#1f3b57"/><text x="58" y="550" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" fill="#fff">100W</text>
+</svg>
