@@ -1,8 +1,39 @@
-import { useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { useCallback, useEffect, useState } from 'react';
+import { Link, useLocation, useParams } from 'react-router-dom';
 import api from '../api';
 import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
 import { Price, ProductCard, Stars } from '../components/common';
+import ReviewForm from '../components/ReviewForm';
+
+// Khu vực "Viết đánh giá": chỉ khách đã mua và nhận hàng mới thấy form
+function WriteReview({ productId, onDone }) {
+  const { user, isAdmin } = useAuth();
+  const location = useLocation();
+  const [elig, setElig] = useState(null);
+
+  useEffect(() => {
+    if (!user || isAdmin) return;
+    api.get(`/reviews/eligible/${productId}`).then((r) => setElig(r.data)).catch(() => setElig(null));
+  }, [productId, user, isAdmin]);
+
+  if (isAdmin) return null;
+  if (!user) {
+    return (
+      <p className="review-note">
+        <Link to="/login" state={{ from: location.pathname }}>Đăng nhập</Link> để đánh giá sản phẩm bạn đã mua.
+      </p>
+    );
+  }
+  if (!elig) return null;
+  if (!elig.canReview) return <p className="review-note">{elig.reason}</p>;
+  return (
+    <div className="review-box">
+      <b>Viết đánh giá</b> <span className="muted small">(đơn hàng {elig.orderCode})</span>
+      <ReviewForm orderId={elig.orderId} productId={productId} onDone={() => { setElig({ canReview: false, reason: 'Bạn đã đánh giá sản phẩm này. Cảm ơn bạn!' }); onDone(); }} />
+    </div>
+  );
+}
 import { formatDate } from '../utils/format';
 import NotFound from './NotFound';
 
@@ -15,21 +46,28 @@ export default function ProductDetail() {
   const [qty, setQty] = useState(1);
   const [notFound, setNotFound] = useState(false);
 
+  const load = useCallback(
+    (keepScroll) => {
+      api
+        .get(`/products/${slug}`)
+        .then((r) => {
+          setData(r.data);
+          return api.get(`/products/${r.data.product._id}/reviews`);
+        })
+        .then((r) => setReviews(r.data))
+        .catch((e) => e.response?.status === 404 && setNotFound(true));
+      if (!keepScroll) window.scrollTo(0, 0);
+    },
+    [slug]
+  );
+
   useEffect(() => {
     setData(null);
     setNotFound(false);
     setActiveImg(0);
     setQty(1);
-    api
-      .get(`/products/${slug}`)
-      .then((r) => {
-        setData(r.data);
-        return api.get(`/products/${r.data.product._id}/reviews`);
-      })
-      .then((r) => setReviews(r.data))
-      .catch((e) => e.response?.status === 404 && setNotFound(true));
-    window.scrollTo(0, 0);
-  }, [slug]);
+    load(false);
+  }, [load]);
 
   if (notFound) return <NotFound />;
   if (!data) return <p className="muted">Đang tải...</p>;
@@ -98,7 +136,13 @@ export default function ProductDetail() {
 
         <section className="card pad">
           <h2>Đánh giá ({reviews.length})</h2>
-          {reviews.length === 0 && <p className="muted">Chưa có đánh giá. Khách hàng đã mua và nhận hàng có thể đánh giá trong mục Đơn mua → chi tiết đơn hàng.</p>}
+          {reviews.length > 0 && (
+            <p className="rating-summary">
+              <b>{p.averageRating.toFixed(1)}</b>/5 <Stars value={p.averageRating} size={16} /> <span className="muted">({p.numReviews} đánh giá)</span>
+            </p>
+          )}
+          <WriteReview productId={p._id} onDone={() => load(true)} />
+          {reviews.length === 0 && <p className="muted">Chưa có đánh giá nào cho sản phẩm này.</p>}
           {reviews.map((r) => (
             <div key={r._id} className="review">
               <b>{r.user?.fullName || 'Khách hàng'}</b> <Stars value={r.rating} />

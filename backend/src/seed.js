@@ -2,6 +2,7 @@
 //   node src/seed.js               XÓA toàn bộ dữ liệu cũ rồi tạo dữ liệu mẫu
 //   node src/seed.js --images-only Chỉ gắn ảnh mẫu cho sản phẩm/danh mục đang có (theo SKU, tên danh mục), không xóa gì
 //   Thêm --svg vào 2 lệnh trên để dùng ảnh minh họa SVG thay cho ảnh Unsplash
+//   node src/seed.js --sample-activity Thêm khách hàng mẫu, đơn đã giao và đánh giá mẫu vào database đang có (không xóa gì)
 require('dotenv').config();
 const mongoose = require('mongoose');
 const User = require('./models/User');
@@ -12,6 +13,7 @@ const Cart = require('./models/Cart');
 const Order = require('./models/Order');
 const Review = require('./models/Review');
 const PRODUCTS = require('./data/sampleProducts');
+const ACTIVITY = require('./data/sampleActivity');
 const { slugify } = require('./utils/helpers');
 
 // Mặc định dùng ảnh thật từ Unsplash (cần Internet).
@@ -42,23 +44,12 @@ async function fullSeed() {
   console.log('Đang xóa dữ liệu cũ...');
   await Promise.all([User, Category, Brand, Product, Cart, Order, Review].map((M) => M.deleteMany({})));
 
-  await User.create([
-    {
-      fullName: 'Quản trị viên',
-      email: process.env.SEED_ADMIN_EMAIL || 'admin@phukien.vn',
-      password: process.env.SEED_ADMIN_PASSWORD || 'Admin@123',
-      role: 'admin',
-    },
-    {
-      fullName: 'Nguyễn Văn An',
-      email: 'khachhang@phukien.vn',
-      password: 'Khach@123',
-      phone: '0912345678',
-      addresses: [
-        { fullName: 'Nguyễn Văn An', phone: '0912345678', province: 'TP. Hồ Chí Minh', district: 'Quận 10', ward: 'Phường 12', street: '268 Lý Thường Kiệt', isDefault: true },
-      ],
-    },
-  ]);
+  await User.create({
+    fullName: 'Quản trị viên',
+    email: process.env.SEED_ADMIN_EMAIL || 'admin@phukien.vn',
+    password: process.env.SEED_ADMIN_PASSWORD || 'Admin@123',
+    role: 'admin',
+  });
 
   const cats = {};
   for (const name of CATEGORIES) cats[name] = await Category.create({ name, image: categoryImage(name) });
@@ -81,9 +72,79 @@ async function fullSeed() {
     });
   }
 
+  await seedSampleActivity();
+
   console.log('Đã tạo dữ liệu mẫu:');
   console.log(`  Admin:      ${process.env.SEED_ADMIN_EMAIL || 'admin@phukien.vn'} / (SEED_ADMIN_PASSWORD trong .env)`);
-  console.log('  Khách hàng: khachhang@phukien.vn / Khach@123');
+  console.log(`  Khách hàng: ${ACTIVITY.CUSTOMERS.map((c) => c.email).join(', ')} / ${ACTIVITY.PASSWORD}`);
+}
+
+// Khách hàng mẫu + đơn hàng đã giao + đánh giá mẫu (để trang sản phẩm, trang thống kê có dữ liệu khi demo)
+async function seedSampleActivity() {
+  const DAY = 24 * 3600 * 1000;
+  const users = [];
+  for (const c of ACTIVITY.CUSTOMERS) {
+    let u = await User.findOne({ email: c.email });
+    if (!u) {
+      u = await User.create({ fullName: c.fullName, email: c.email, phone: c.phone, password: ACTIVITY.PASSWORD, addresses: [{ ...c.address, isDefault: true }] });
+    }
+    users.push(u);
+  }
+  if (await Review.exists({ user: { $in: users.map((u) => u._id) } })) {
+    console.log('Khách hàng mẫu đã có đánh giá, bỏ qua tạo đơn/đánh giá mẫu');
+    return;
+  }
+
+  const orders = [];
+  for (const [i, o] of ACTIVITY.ORDERS.entries()) {
+    const user = users[o.customer];
+    const products = await Product.find({ sku: { $in: o.skus } });
+    if (!products.length) continue;
+    const items = products.map((p) => ({ product: p._id, name: p.name, image: p.images[0], price: p.finalPrice, quantity: 1 }));
+    const subtotal = items.reduce((s, it) => s + it.price, 0);
+    const shippingFee = subtotal >= 500000 ? 0 : 30000;
+    const created = new Date(Date.now() - o.daysAgo * DAY);
+    const at = (h) => new Date(created.getTime() + h * 3600 * 1000);
+    const a = ACTIVITY.CUSTOMERS[o.customer].address;
+    const order = await Order.create({
+      orderCode: `DH${created.toISOString().slice(2, 10).replace(/-/g, '')}${String(9000 + i)}`,
+      user: user._id,
+      items,
+      shippingAddress: { fullName: a.fullName, phone: a.phone, street: a.street, ward: a.ward, district: a.district, province: a.province },
+      subtotal,
+      shippingFee,
+      totalAmount: subtotal + shippingFee,
+      paymentMethod: o.paymentMethod,
+      paymentStatus: 'paid',
+      paymentInfo: { paidAt: o.paymentMethod === 'COD' ? at(72) : at(0.1), transactionId: o.paymentMethod === 'COD' ? undefined : String(14600000 + i) },
+      orderStatus: 'delivered',
+      statusHistory: [
+        { status: 'pending', note: 'Khách hàng đặt hàng', updatedAt: at(0) },
+        { status: 'confirmed', note: 'Đã xác nhận', updatedAt: at(2) },
+        { status: 'shipping', note: 'Đang giao', updatedAt: at(20) },
+        { status: 'delivered', note: 'Đã giao', updatedAt: at(72) },
+      ],
+      stockDeducted: true,
+      deliveredAt: at(72),
+    });
+    // Đặt lại ngày tạo đơn về quá khứ (timestamps của Mongoose luôn ghi thời điểm hiện tại)
+    await Order.collection.updateOne({ _id: order._id }, { $set: { createdAt: created, updatedAt: at(72) } });
+    for (const it of items) await Product.updateOne({ _id: it.product }, { $inc: { stock: -1, sold: 1 } });
+    orders[i] = { order, deliveredAt: at(72) };
+  }
+
+  const touched = new Set();
+  for (const r of ACTIVITY.REVIEWS) {
+    const o = orders[r.order];
+    const product = o && (await Product.findOne({ sku: r.sku }));
+    if (!product) continue;
+    const review = await Review.create({ product: product._id, user: o.order.user, order: o.order._id, rating: r.rating, comment: r.comment });
+    const when = new Date(o.deliveredAt.getTime() + 2 * DAY);
+    await Review.collection.updateOne({ _id: review._id }, { $set: { createdAt: when, updatedAt: when } });
+    touched.add(String(product._id));
+  }
+  for (const id of touched) await Review.recalcProduct(id);
+  console.log(`Đã tạo ${orders.filter(Boolean).length} đơn đã giao và ${ACTIVITY.REVIEWS.length} đánh giá mẫu`);
 }
 
 // Dùng khi triển khai: server tự tạo dữ liệu mẫu nếu database còn trống (AUTO_SEED=true)
@@ -105,6 +166,7 @@ if (require.main === module) {
   (async () => {
     await mongoose.connect(process.env.MONGO_URI);
     if (process.argv.includes('--images-only')) await imagesOnly();
+    else if (process.argv.includes('--sample-activity')) await seedSampleActivity();
     else await fullSeed();
     await mongoose.disconnect();
   })().catch((err) => {
