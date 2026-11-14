@@ -77,7 +77,7 @@ const stockOf = async (slug) => (await call('GET', `/products/${slug}`)).data.pr
   r = await call('POST', '/orders', { shippingAddress: { ...addr, phone: '123' }, paymentMethod: 'COD' }, token);
   check('Đặt hàng', 'Số điện thoại người nhận sai bị từ chối', r.status === 400);
   r = await call('POST', '/orders', { shippingAddress: addr, paymentMethod: 'VNPAY' }, token);
-  check('Đặt hàng', 'Phương thức thanh toán không hỗ trợ (VNPay) bị từ chối', r.status === 400);
+  check('Đặt hàng', 'Phương thức thanh toán không hỗ trợ bị từ chối', r.status === 400);
   r = await call('POST', '/orders', { shippingAddress: addr, paymentMethod: 'COD' }, token);
   const cod = r.data.order;
   check('Đặt hàng', 'Đặt hàng COD', r.status === 201 && cod.orderStatus === 'pending');
