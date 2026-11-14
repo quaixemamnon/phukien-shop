@@ -1,7 +1,7 @@
 import { Routes, Route, Outlet } from 'react-router-dom';
 import Header from './components/Header';
 import Footer from './components/Footer';
-import { RequireAuth, RequireAdmin } from './components/ProtectedRoute';
+import { RequireAuth, RequireRole } from './components/ProtectedRoute';
 import AdminLayout from './components/AdminLayout';
 
 import Home from './pages/Home';
@@ -57,7 +57,6 @@ export default function App() {
         <Route element={<RequireAuth />}>
           <Route path="/cart" element={<Cart />} />
           <Route path="/checkout" element={<Checkout />} />
-          <Route path="/payment/vnpay-return" element={<PaymentResult gateway="vnpay" />} />
           <Route path="/payment/momo-return" element={<PaymentResult gateway="momo" />} />
           <Route path="/payment/momo-sandbox" element={<MomoSandbox />} />
           <Route path="/orders" element={<MyOrders />} />
@@ -67,7 +66,8 @@ export default function App() {
         <Route path="*" element={<NotFound />} />
       </Route>
 
-      <Route path="/admin" element={<RequireAdmin />}>
+      {/* Trang quản trị: nhân viên và quản trị viên; Người dùng, Thống kê chỉ quản trị viên */}
+      <Route path="/admin" element={<RequireRole roles={['admin', 'staff']} />}>
         <Route element={<AdminLayout />}>
           <Route index element={<Dashboard />} />
           <Route path="products" element={<AdminProducts />} />
@@ -77,9 +77,11 @@ export default function App() {
           <Route path="brands" element={<AdminBrands />} />
           <Route path="orders" element={<AdminOrders />} />
           <Route path="orders/:id" element={<AdminOrderDetail />} />
-          <Route path="users" element={<AdminUsers />} />
           <Route path="reviews" element={<AdminReviews />} />
-          <Route path="stats" element={<AdminStats />} />
+          <Route element={<RequireRole roles={['admin']} />}>
+            <Route path="users" element={<AdminUsers />} />
+            <Route path="stats" element={<AdminStats />} />
+          </Route>
         </Route>
       </Route>
     </Routes>

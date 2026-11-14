@@ -27,13 +27,14 @@ const orderSchema = new mongoose.Schema(
     subtotal: { type: Number, required: true },
     shippingFee: { type: Number, default: 0 },
     totalAmount: { type: Number, required: true },
-    paymentMethod: { type: String, enum: ['COD', 'VNPAY', 'MOMO'], default: 'COD' },
+    paymentMethod: { type: String, enum: ['COD', 'MOMO'], default: 'COD' },
     paymentStatus: { type: String, enum: ['pending', 'paid', 'failed', 'refunded'], default: 'pending' },
     paymentInfo: {
       txnRef: String, // mã giao dịch gửi sang cổng thanh toán
       transactionId: String,
       bankCode: String,
       paidAt: Date,
+      refundedAt: Date, // ngày cửa hàng hoàn tiền cho đơn MoMo bị hủy
     },
     orderStatus: { type: String, enum: ORDER_STATUSES, default: 'pending' },
     statusHistory: [

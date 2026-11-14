@@ -10,6 +10,8 @@ const { startOrderJobs } = require('./jobs/orderJobs');
 
 const app = express();
 app.set('trust proxy', 1); // chạy sau proxy của Render/Cloudflare: lấy đúng IP và giao thức https
+// Tham số URL chỉ là chuỗi (không cho dạng ?status[$ne]=x) để tránh chèn toán tử MongoDB vào câu truy vấn
+app.set('query parser', 'simple');
 
 const allowedOrigins = (process.env.CLIENT_URL || '').split(',').map((s) => s.trim()).filter(Boolean);
 app.use(cors({ origin: allowedOrigins.length ? allowedOrigins : true }));
@@ -46,6 +48,11 @@ app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
 connectDB().then(async () => {
+  try {
+    await require('./utils/migrations').runMigrations();
+  } catch (err) {
+    console.error('Cập nhật dữ liệu cũ thất bại:', err.message);
+  }
   if (process.env.AUTO_SEED === 'true') {
     try {
       await require('./seed').seedIfEmpty();

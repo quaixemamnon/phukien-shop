@@ -5,19 +5,20 @@ import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { Price, ProductCard, Stars } from '../components/common';
 import ReviewForm from '../components/ReviewForm';
+import { addRecentlyViewed } from '../utils/recentlyViewed';
 
 // Khu vực "Viết đánh giá": chỉ khách đã mua và nhận hàng mới thấy form
 function WriteReview({ productId, onDone }) {
-  const { user, isAdmin } = useAuth();
+  const { user, isBackoffice } = useAuth();
   const location = useLocation();
   const [elig, setElig] = useState(null);
 
   useEffect(() => {
-    if (!user || isAdmin) return;
+    if (!user || isBackoffice) return;
     api.get(`/reviews/eligible/${productId}`).then((r) => setElig(r.data)).catch(() => setElig(null));
-  }, [productId, user, isAdmin]);
+  }, [productId, user, isBackoffice]);
 
-  if (isAdmin) return null;
+  if (isBackoffice) return null;
   if (!user) {
     return (
       <p className="review-note">
@@ -52,6 +53,7 @@ export default function ProductDetail() {
         .get(`/products/${slug}`)
         .then((r) => {
           setData(r.data);
+          addRecentlyViewed(r.data.product._id); // ghi nhận "Đã xem gần đây"
           return api.get(`/products/${r.data.product._id}/reviews`);
         })
         .then((r) => setReviews(r.data))

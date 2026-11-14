@@ -91,7 +91,7 @@ export default function Products() {
       <section>
         <div className="toolbar">
           <h1 className="h2">
-            {keyword ? `Kết quả cho “${keyword}”` : currentCat ? currentCat.name : 'Tất cả sản phẩm'}
+            {keyword ? `Kết quả cho “${keyword}”` : currentCat ? currentCat.name : params.get('onSale') === '1' ? 'Sản phẩm đang giảm giá' : 'Tất cả sản phẩm'}
             <span className="muted"> ({result.total} sản phẩm)</span>
           </h1>
           <select id="sort" value={params.get('sort') || 'newest'} onChange={(e) => setParam('sort', e.target.value)}>

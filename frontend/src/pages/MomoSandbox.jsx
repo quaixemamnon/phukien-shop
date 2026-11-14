@@ -12,16 +12,19 @@ export default function MomoSandbox() {
   const [info, setInfo] = useState(null);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
-  const [seconds, setSeconds] = useState(15 * 60);
+  const [now, setNow] = useState(Date.now());
 
   useEffect(() => {
     api.get(`/payment/momo-mock/${orderId}`).then((r) => setInfo(r.data)).catch((e) => setError(errMsg(e)));
   }, [orderId]);
 
   useEffect(() => {
-    const t = setInterval(() => setSeconds((s) => Math.max(0, s - 1)), 1000);
+    const t = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(t);
   }, []);
+
+  // Đếm ngược tới hạn thanh toán của đơn (30 phút kể từ lúc đặt, giống quy tắc ở server)
+  const seconds = info ? Math.max(0, Math.floor((new Date(info.expiresAt).getTime() - now) / 1000)) : 0;
 
   const finish = async (success) => {
     setBusy(true);
@@ -68,7 +71,7 @@ export default function MomoSandbox() {
           })}
         </div>
         <div className="momo-info">
-          <div className="row"><span className="muted">Nhà cung cấp</span><b>Phụ Kiện Shop</b></div>
+          <div className="row"><span className="muted">Nhà cung cấp</span><b>Kayden Store</b></div>
           <div className="row"><span className="muted">Mã đơn hàng</span><b>{info.orderCode}</b></div>
           <div className="row"><span className="muted">Mã giao dịch</span><span className="small">{orderId}</span></div>
           <div className="row total"><span>Số tiền</span><b>{formatPrice(info.amount)}</b></div>

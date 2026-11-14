@@ -14,10 +14,10 @@ export function CartProvider({ children }) {
   const [loading, setLoading] = useState(false);
   const [loaded, setLoaded] = useState(false); // đã tải giỏ hàng ít nhất 1 lần
   const userId = user?._id;
-  const isAdmin = user?.role === 'admin';
+  const isBackoffice = user?.role === 'admin' || user?.role === 'staff'; // tài khoản nội bộ không có giỏ hàng
 
   const fetchCart = useCallback(async () => {
-    if (!userId || isAdmin) {
+    if (!userId || isBackoffice) {
       setCart(EMPTY);
       setLoaded(true);
       return;
@@ -32,7 +32,7 @@ export function CartProvider({ children }) {
       setLoading(false);
       setLoaded(true);
     }
-  }, [userId, isAdmin]);
+  }, [userId, isBackoffice]);
 
   useEffect(() => {
     fetchCart();
@@ -42,6 +42,10 @@ export function CartProvider({ children }) {
     if (!user) {
       toast('Vui lòng đăng nhập để thêm vào giỏ hàng');
       navigate('/login', { state: { from: window.location.pathname } });
+      return false;
+    }
+    if (isBackoffice) {
+      toast.error('Tài khoản nhân viên/quản trị không dùng để mua hàng');
       return false;
     }
     try {

@@ -2,7 +2,7 @@ const User = require('../models/User');
 const Product = require('../models/Product');
 const Order = require('../models/Order');
 const service = require('../services/orderService');
-const { ApiError, asyncHandler, escapeRegex, paginate, pick } = require('../utils/helpers');
+const { ApiError, asyncHandler, escapeRegex, keywordFilter, paginate, pick } = require('../utils/helpers');
 
 /* ======================= SẢN PHẨM ======================= */
 const PRODUCT_FIELDS = ['name', 'sku', 'description', 'price', 'salePrice', 'stock', 'images', 'category', 'brand', 'specifications', 'warrantyMonths', 'isActive'];
@@ -11,11 +11,7 @@ const PRODUCT_FIELDS = ['name', 'sku', 'description', 'price', 'salePrice', 'sto
 exports.listProducts = asyncHandler(async (req, res) => {
   const { keyword, category, status } = req.query;
   const { page, limit, skip } = paginate(req.query, 20, 100);
-  const filter = {};
-  if (keyword) {
-    const rx = { $regex: escapeRegex(keyword.trim()), $options: 'i' };
-    filter.$or = [{ name: rx }, { sku: rx }];
-  }
+  const filter = { ...keywordFilter('searchText', keyword) }; // tìm theo tên hoặc SKU, không phân biệt dấu
   if (category) filter.category = category;
   if (status === 'active') filter.isActive = true;
   if (status === 'hidden') filter.isActive = false;
@@ -89,7 +85,7 @@ exports.listOrders = asyncHandler(async (req, res) => {
   if (status) filter.orderStatus = status;
   if (paymentMethod) filter.paymentMethod = paymentMethod;
   if (keyword) {
-    const rx = { $regex: escapeRegex(keyword.trim()), $options: 'i' };
+    const rx = { $regex: escapeRegex(String(keyword).trim()), $options: 'i' };
     filter.$or = [{ orderCode: rx }, { 'shippingAddress.fullName': rx }, { 'shippingAddress.phone': rx }];
   }
   if (from || to) {
@@ -136,6 +132,19 @@ exports.updateOrderStatus = asyncHandler(async (req, res) => {
   res.json({ message: `Đã cập nhật trạng thái: ${L[status]}`, order });
 });
 
+// PATCH /api/admin/orders/:id/refund { note } - quản trị viên xác nhận đã hoàn tiền cho đơn MoMo bị hủy
+exports.markRefunded = asyncHandler(async (req, res) => {
+  const order = await Order.findById(req.params.id);
+  if (!order) throw new ApiError(404, 'Không tìm thấy đơn hàng');
+  if (!service.needsRefund(order)) throw new ApiError(400, 'Chỉ hoàn tiền cho đơn MoMo đã thanh toán và đã bị hủy');
+  order.paymentStatus = 'refunded';
+  order.paymentInfo.refundedAt = new Date();
+  const note = String(req.body.note || '').trim().slice(0, 200);
+  order.statusHistory.push({ status: 'cancelled', note: note ? `Đã hoàn tiền: ${note}` : 'Đã hoàn tiền cho khách', updatedBy: req.user._id });
+  await order.save();
+  res.json({ message: 'Đã ghi nhận hoàn tiền', order });
+});
+
 /* ======================= NGƯỜI DÙNG ======================= */
 
 // GET /api/admin/users?keyword=&role=&status=&page=
@@ -144,7 +153,7 @@ exports.listUsers = asyncHandler(async (req, res) => {
   const { page, limit, skip } = paginate(req.query, 20, 100);
   const filter = {};
   if (keyword) {
-    const rx = { $regex: escapeRegex(keyword.trim()), $options: 'i' };
+    const rx = { $regex: escapeRegex(String(keyword).trim()), $options: 'i' };
     filter.$or = [{ fullName: rx }, { email: rx }, { phone: rx }];
   }
   if (role) filter.role = role;
@@ -184,10 +193,11 @@ exports.toggleUserStatus = asyncHandler(async (req, res) => {
 // PATCH /api/admin/users/:id/role { role }
 exports.changeUserRole = asyncHandler(async (req, res) => {
   const { role } = req.body;
-  if (!['customer', 'admin'].includes(role)) throw new ApiError(400, 'Vai trò không hợp lệ');
+  if (!['customer', 'staff', 'admin'].includes(role)) throw new ApiError(400, 'Vai trò không hợp lệ');
+  if (String(req.params.id) === String(req.user._id)) throw new ApiError(400, 'Không thể tự thay đổi vai trò của chính mình');
   const user = await User.findById(req.params.id);
   if (!user) throw new ApiError(404, 'Không tìm thấy người dùng');
-  if (user.role === 'admin' && role === 'customer' && (await User.countDocuments({ role: 'admin' })) <= 1) {
+  if (user.role === 'admin' && role !== 'admin' && (await User.countDocuments({ role: 'admin' })) <= 1) {
     throw new ApiError(400, 'Hệ thống phải còn ít nhất một quản trị viên');
   }
   user.role = role;
@@ -221,17 +231,13 @@ exports.overview = asyncHandler(async (req, res) => {
     Order.find().populate('user', 'fullName').sort({ createdAt: -1 }).limit(6),
   ]);
 
-  res.json({
-    totalRevenue: rev ? rev.total : 0,
-    orderCount,
-    pendingOrders,
-    customerCount,
-    productCount,
-    lowStock,
-    monthly,
-    topProducts,
-    recentOrders,
-  });
+  const refundPending = await Order.countDocuments({ orderStatus: 'cancelled', paymentMethod: { $ne: 'COD' }, paymentStatus: 'paid' });
+  const common = { orderCount, pendingOrders, customerCount, productCount, lowStock, recentOrders, refundPending };
+  if (req.user.role !== 'admin') {
+    // Nhân viên: chỉ số liệu vận hành, không có doanh thu
+    return res.json({ ...common, topProducts: topProducts.map(({ revenue, ...p }) => p) });
+  }
+  res.json({ ...common, totalRevenue: rev ? rev.total : 0, monthly, topProducts });
 });
 
 function topProductsAgg(match, limit = 5) {

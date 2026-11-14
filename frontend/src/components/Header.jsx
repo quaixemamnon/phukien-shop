@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 
 export default function Header() {
-  const { user, logout, isAdmin } = useAuth();
+  const { user, logout, isBackoffice } = useAuth();
   const { cart } = useCart();
   const navigate = useNavigate();
   const [params] = useSearchParams();
@@ -34,7 +34,7 @@ export default function Header() {
     <header className="site-header">
       <div className="container header-row">
         <Link to="/" className="logo">
-          <span className="logo-mark">PK</span> Phụ Kiện Shop
+          <span className="logo-mark">KS</span> Kayden Store
         </Link>
         <form className="search" onSubmit={onSearch} role="search">
           <input id="header-search" value={keyword} onChange={(e) => setKeyword(e.target.value)} placeholder="Tìm tai nghe, củ sạc, cáp sạc..." />
@@ -48,8 +48,8 @@ export default function Header() {
               </button>
               {menuOpen && (
                 <div className="dropdown-menu" onClick={() => setMenuOpen(false)}>
-                  {isAdmin && <Link to="/admin">Trang quản trị</Link>}
-                  {!isAdmin && <Link to="/orders">Đơn hàng của tôi</Link>}
+                  {isBackoffice && <Link to="/admin">Trang quản trị</Link>}
+                  {!isBackoffice && <Link to="/orders">Đơn hàng của tôi</Link>}
                   <Link to="/profile">Tài khoản</Link>
                   <button onClick={onLogout}>Đăng xuất</button>
                 </div>
@@ -61,12 +61,12 @@ export default function Header() {
               <Link className="btn outline" to="/register">Đăng ký</Link>
             </>
           )}
-          {user && !isAdmin && (
+          {user && !isBackoffice && (
             <Link to="/orders" className="cart-link" aria-label="Đơn mua">
               📦 <span>Đơn mua</span>
             </Link>
           )}
-          {!isAdmin && (
+          {!isBackoffice && (
             <Link to="/cart" className="cart-link" aria-label="Giỏ hàng">
               🛒 <span>Giỏ hàng</span>
               {cart.count > 0 && <b className="cart-badge">{cart.count}</b>}

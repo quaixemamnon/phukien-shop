@@ -2,7 +2,8 @@ const Product = require('../models/Product');
 const Category = require('../models/Category');
 const Brand = require('../models/Brand');
 const Review = require('../models/Review');
-const { ApiError, asyncHandler, escapeRegex, paginate } = require('../utils/helpers');
+const mongoose = require('mongoose');
+const { ApiError, asyncHandler, keywordFilter, paginate } = require('../utils/helpers');
 
 const SORTS = {
   newest: { createdAt: -1 },
@@ -14,11 +15,10 @@ const SORTS = {
 
 // GET /api/products?keyword=&category=&brand=&minPrice=&maxPrice=&sort=&page=&limit=
 exports.getProducts = asyncHandler(async (req, res) => {
-  const { keyword, category, brand, minPrice, maxPrice, sort } = req.query;
+  const { keyword, category, brand, minPrice, maxPrice, sort, onSale } = req.query;
   const { page, limit, skip } = paginate(req.query, 12, 48);
-  const filter = { isActive: true };
-
-  if (keyword) filter.name = { $regex: escapeRegex(keyword.trim()), $options: 'i' };
+  const filter = { isActive: true, ...keywordFilter('searchText', keyword) };
+  if (onSale === '1') filter.salePrice = { $ne: null }; // chỉ sản phẩm đang giảm giá
 
   if (category) {
     const cat = await Category.findOne({ slug: category, isActive: true });
@@ -60,6 +60,18 @@ exports.getHomeData = asyncHandler(async (req, res) => {
     Category.find({ isActive: true, parent: null }).sort({ name: 1 }),
   ]);
   res.json({ newest, bestSelling, onSale, categories });
+});
+
+// GET /api/products/by-ids?ids=id1,id2 - dùng cho mục "Đã xem gần đây" (giữ đúng thứ tự gửi lên)
+exports.getProductsByIds = asyncHandler(async (req, res) => {
+  const ids = String(req.query.ids || '')
+    .split(',')
+    .filter((id) => mongoose.isValidObjectId(id))
+    .slice(0, 12);
+  if (!ids.length) return res.json([]);
+  const products = await Product.find({ _id: { $in: ids }, isActive: true });
+  const byId = Object.fromEntries(products.map((p) => [String(p._id), p]));
+  res.json(ids.map((id) => byId[id]).filter(Boolean));
 });
 
 // GET /api/products/:slug

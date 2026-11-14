@@ -3,6 +3,7 @@ const c = require('../controllers/productController');
 
 router.get('/', c.getProducts);
 router.get('/home', c.getHomeData);
+router.get('/by-ids', c.getProductsByIds);
 router.get('/:id/reviews', c.getProductReviews);
 router.get('/:slug', c.getProductBySlug);
 

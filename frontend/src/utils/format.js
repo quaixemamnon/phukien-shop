@@ -27,7 +27,6 @@ export const PAYMENT_STATUS = {
 
 export const PAYMENT_METHOD = {
   COD: 'Thanh toán khi nhận hàng',
-  VNPAY: 'VNPay',
   MOMO: 'Ví MoMo',
 };
 

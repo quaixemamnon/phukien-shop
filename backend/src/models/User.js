@@ -30,7 +30,8 @@ const userSchema = new mongoose.Schema(
     },
     password: { type: String, required: [true, 'Vui lòng nhập mật khẩu'], minlength: [6, 'Mật khẩu tối thiểu 6 ký tự'], select: false },
     phone: { type: String, match: [/^0\d{9}$/, 'Số điện thoại không hợp lệ'] },
-    role: { type: String, enum: ['customer', 'admin'], default: 'customer' },
+    // customer: khách hàng; staff: nhân viên (xử lý đơn, sản phẩm); admin: quản trị viên (toàn quyền)
+    role: { type: String, enum: ['customer', 'staff', 'admin'], default: 'customer' },
     addresses: [addressSchema],
     isActive: { type: Boolean, default: true },
     resetPasswordToken: { type: String, select: false },

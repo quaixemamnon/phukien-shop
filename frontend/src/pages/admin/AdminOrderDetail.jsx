@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import api, { errMsg } from '../../api';
 import OrderInfo, { BackLink } from '../../components/OrderInfo';
+import { useAuth } from '../../context/AuthContext';
 
 // Các bước chuyển trạng thái hợp lệ (giống backend)
 const ACTIONS = {
@@ -15,6 +16,7 @@ const ACTIONS = {
 
 export default function AdminOrderDetail() {
   const { id } = useParams();
+  const { isAdmin } = useAuth();
   const [order, setOrder] = useState(null);
   const [busy, setBusy] = useState(false);
 
@@ -44,6 +46,22 @@ export default function AdminOrderDetail() {
   };
 
   const waitingPayment = order.paymentMethod !== 'COD' && order.paymentStatus !== 'paid' && order.orderStatus === 'pending';
+  const needRefund = order.orderStatus === 'cancelled' && order.paymentMethod !== 'COD' && order.paymentStatus === 'paid';
+
+  const refund = async () => {
+    const note = window.prompt('Ghi chú hoàn tiền (ví dụ: đã chuyển lại qua MoMo, mã GD...):', '');
+    if (note === null) return;
+    setBusy(true);
+    try {
+      const { data } = await api.patch(`/admin/orders/${id}/refund`, { note });
+      toast.success(data.message);
+      setOrder({ ...data.order, user: order.user });
+    } catch (e) {
+      toast.error(errMsg(e));
+    } finally {
+      setBusy(false);
+    }
+  };
 
   return (
     <>
@@ -59,6 +77,16 @@ export default function AdminOrderDetail() {
         </div>
       </div>
       {waitingPayment && <p className="alert warn">Đơn thanh toán online đang chờ khách thanh toán. Hệ thống sẽ tự hủy nếu quá 30 phút.</p>}
+      {needRefund && (
+        <div className="alert warn row-between">
+          <span>Đơn đã thanh toán qua MoMo nhưng bị hủy, cần hoàn tiền cho khách.</span>
+          {isAdmin ? (
+            <button className="btn primary" disabled={busy} onClick={refund}>Xác nhận đã hoàn tiền</button>
+          ) : (
+            <span className="small">Báo quản trị viên để hoàn tiền.</span>
+          )}
+        </div>
+      )}
       <OrderInfo order={order} />
     </>
   );

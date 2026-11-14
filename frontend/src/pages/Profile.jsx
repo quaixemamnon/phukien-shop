@@ -141,7 +141,7 @@ export default function Profile() {
     <>
       <h1>Tài khoản của tôi</h1>
       <div className="tabs">
-        {TABS.filter((t) => user.role !== 'admin' || t[0] !== 'address').map(([k, label]) => (
+        {TABS.filter((t) => user.role === 'customer' || t[0] !== 'address').map(([k, label]) => (
           <button key={k} className={tab === k ? 'active' : ''} onClick={() => setTab(k)}>{label}</button>
         ))}
       </div>

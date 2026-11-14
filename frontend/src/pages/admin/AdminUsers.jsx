@@ -88,6 +88,7 @@ export default function AdminUsers() {
         <select id="au-role" value={q.role} onChange={(e) => setQ({ ...q, role: e.target.value, page: 1 })}>
           <option value="">Mọi vai trò</option>
           <option value="customer">Khách hàng</option>
+          <option value="staff">Nhân viên</option>
           <option value="admin">Quản trị viên</option>
         </select>
         <select id="au-status" value={q.status} onChange={(e) => setQ({ ...q, status: e.target.value, page: 1 })}>
@@ -108,6 +109,7 @@ export default function AdminUsers() {
                 <td>
                   <select value={u.role} disabled={u._id === me._id} onChange={(e) => changeRole(u, e.target.value)}>
                     <option value="customer">Khách hàng</option>
+                    <option value="staff">Nhân viên</option>
                     <option value="admin">Quản trị viên</option>
                   </select>
                 </td>

@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const { slugify } = require('../utils/helpers');
+const { slugify, normalizeText } = require('../utils/helpers');
 
 const productSchema = new mongoose.Schema(
   {
@@ -34,11 +34,13 @@ const productSchema = new mongoose.Schema(
     averageRating: { type: Number, default: 0, min: 0, max: 5 },
     numReviews: { type: Number, default: 0 },
     isActive: { type: Boolean, default: true },
+    // Tên + SKU đã bỏ dấu, viết thường - dùng cho tìm kiếm không dấu ("cu sac" tìm ra "Củ sạc")
+    searchText: { type: String, default: '', select: false },
   },
   { timestamps: true }
 );
 
-productSchema.index({ name: 'text', description: 'text' });
+productSchema.index({ searchText: 1 });
 productSchema.index({ category: 1, brand: 1, finalPrice: 1 });
 
 productSchema.pre('validate', function beforeValidate(next) {
@@ -47,6 +49,7 @@ productSchema.pre('validate', function beforeValidate(next) {
   }
   if (this.salePrice === '' || this.salePrice === 0) this.salePrice = null;
   this.finalPrice = this.salePrice != null && this.salePrice < this.price ? this.salePrice : this.price;
+  this.searchText = normalizeText(`${this.name} ${this.sku}`);
   next();
 });
 

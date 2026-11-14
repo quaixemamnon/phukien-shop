@@ -21,7 +21,7 @@ export default function Login() {
     try {
       const user = await login(form.email, form.password);
       toast.success('Đăng nhập thành công');
-      if (user.role === 'admin') navigate('/admin');
+      if (user.role === 'admin' || user.role === 'staff') navigate('/admin');
       else navigate(location.state?.from || '/');
     } catch (err) {
       setError(errMsg(err));

@@ -1,7 +1,6 @@
 const Product = require('../models/Product');
 const Cart = require('../models/Cart');
 const sendEmail = require('../utils/sendEmail');
-const vnpay = require('../utils/vnpay');
 const momo = require('../utils/momo');
 const { clientUrl } = require('../utils/helpers');
 
@@ -40,44 +39,39 @@ async function restoreStock(items) {
 
 const clearCart = (userId) => Cart.updateOne({ user: userId }, { $set: { items: [] } });
 
+// Đơn đã thanh toán online mà bị hủy thì cần hoàn tiền cho khách
+const needsRefund = (order) => order.orderStatus === 'cancelled' && order.paymentMethod !== 'COD' && order.paymentStatus === 'paid';
+
 async function cancelOrder(order, reason, byUserId) {
   if (order.stockDeducted) {
     await restoreStock(order.items);
     order.stockDeducted = false;
   }
-  const needRefund = order.paymentStatus === 'paid' && order.paymentMethod !== 'COD';
   order.orderStatus = 'cancelled';
   order.cancelReason = reason;
   order.statusHistory.push({
     status: 'cancelled',
-    note: needRefund ? `${reason} – cần hoàn tiền cho khách` : reason,
+    note: needsRefund(order) ? `${reason} – cần hoàn tiền cho khách` : reason,
     updatedBy: byUserId,
   });
   await order.save();
   return order;
 }
 
-// Phương thức thanh toán đang bật: VNPay/MoMo chỉ bật khi đã điền thông tin trong .env
+// Phương thức thanh toán đang bật: COD luôn bật, MoMo bật khi có khóa thật hoặc MOMO_MODE=mock
 function enabledPaymentMethods() {
   const methods = ['COD'];
-  if (process.env.VNP_TMN_CODE && process.env.VNP_HASH_SECRET) methods.push('VNPAY');
-  if (momo.isConfigured()) methods.push('MOMO'); // khóa thật hoặc MOMO_MODE=mock
+  if (momo.isConfigured()) methods.push('MOMO');
   return methods;
 }
 
-// Tạo link thanh toán online cho đơn hàng
-async function createPaymentUrl(order, req) {
+// Tạo link thanh toán MoMo cho đơn hàng (mỗi lần thanh toán dùng một mã giao dịch mới)
+async function createPaymentUrl(order) {
+  if (order.paymentMethod !== 'MOMO') return null;
   const txnRef = `${order.orderCode}${Date.now().toString().slice(-6)}`;
   order.paymentInfo.txnRef = txnRef; // paymentInfo là nested object nên luôn tồn tại
   await order.save();
-  const orderInfo = `Thanh toan don hang ${order.orderCode}`;
-  if (order.paymentMethod === 'VNPAY') {
-    return vnpay.buildPaymentUrl({ amount: order.totalAmount, txnRef, orderInfo, ipAddr: vnpay.getClientIp(req) });
-  }
-  if (order.paymentMethod === 'MOMO') {
-    return momo.createPayment({ amount: order.totalAmount, orderId: txnRef, orderInfo });
-  }
-  return null;
+  return momo.createPayment({ amount: order.totalAmount, orderId: txnRef, orderInfo: `Thanh toan don hang ${order.orderCode}` });
 }
 
 function orderEmailHtml(order, title) {
@@ -98,33 +92,22 @@ async function sendOrderEmail(order, title) {
   }
 }
 
-// Ghi nhận thanh toán online thành công (gọi từ IPN hoặc return URL, có thể gọi nhiều lần)
+// Ghi nhận thanh toán MoMo thành công (gọi từ IPN hoặc trang kết quả, gọi nhiều lần vẫn an toàn).
+// Hàng đã được giữ (trừ kho) từ lúc đặt nên ở đây không trừ kho nữa.
 async function markPaid(order, info = {}) {
   if (order.paymentStatus === 'paid') return order;
   order.paymentStatus = 'paid';
   order.paymentInfo.transactionId = info.transactionId;
   order.paymentInfo.bankCode = info.bankCode;
   order.paymentInfo.paidAt = new Date();
-
   if (order.orderStatus === 'cancelled') {
+    // Khách trả tiền sau khi đơn đã tự hủy (quá 30 phút) -> phải hoàn tiền
     order.statusHistory.push({ status: 'cancelled', note: 'Nhận thanh toán sau khi đơn đã hủy – cần hoàn tiền cho khách' });
-    await order.save();
-    return order;
-  }
-
-  const ok = await deductStock(order.items);
-  if (ok) {
-    order.stockDeducted = true;
-    order.statusHistory.push({ status: 'pending', note: `Đã thanh toán qua ${order.paymentMethod}` });
-    await order.save();
-    await clearCart(order.user);
-    await sendOrderEmail(order, 'Đặt hàng và thanh toán thành công');
   } else {
-    order.orderStatus = 'cancelled';
-    order.cancelReason = 'Sản phẩm đã hết hàng sau khi thanh toán';
-    order.statusHistory.push({ status: 'cancelled', note: 'Sản phẩm hết hàng – cần hoàn tiền cho khách' });
-    await order.save();
+    order.statusHistory.push({ status: 'pending', note: `Đã thanh toán qua ${order.paymentMethod}` });
   }
+  await order.save();
+  if (order.orderStatus !== 'cancelled') await sendOrderEmail(order, 'Thanh toán thành công');
   return order;
 }
 
@@ -141,6 +124,7 @@ module.exports = {
   deductStock,
   restoreStock,
   clearCart,
+  needsRefund,
   cancelOrder,
   enabledPaymentMethods,
   createPaymentUrl,

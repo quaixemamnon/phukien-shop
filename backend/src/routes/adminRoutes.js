@@ -3,9 +3,14 @@ const a = require('../controllers/adminController');
 const r = require('../controllers/reviewController');
 const { getOrderById } = require('../controllers/orderController');
 const { categoryCtrl, brandCtrl } = require('./taxonomies');
-const { protect, isAdmin } = require('../middlewares/auth');
+const { protect, isAdmin, isStaff } = require('../middlewares/auth');
 
-router.use(protect, isAdmin);
+// Mọi API quản trị đều cần đăng nhập với vai trò nhân viên hoặc quản trị viên.
+// Các chức năng chỉ quản trị viên được dùng có thêm isAdmin.
+router.use(protect, isStaff);
+
+// Tổng quan (nhân viên không thấy số liệu doanh thu)
+router.get('/stats/overview', a.overview);
 
 // Sản phẩm
 router.get('/products', a.listProducts);
@@ -29,19 +34,17 @@ router.delete('/brands/:id', brandCtrl.remove);
 router.get('/orders', a.listOrders);
 router.get('/orders/:id', getOrderById);
 router.patch('/orders/:id/status', a.updateOrderStatus);
-
-// Người dùng
-router.get('/users', a.listUsers);
-router.get('/users/:id', a.getUser);
-router.patch('/users/:id/status', a.toggleUserStatus);
-router.patch('/users/:id/role', a.changeUserRole);
+router.patch('/orders/:id/refund', isAdmin, a.markRefunded);
 
 // Đánh giá
 router.get('/reviews', r.adminList);
 router.patch('/reviews/:id/visibility', r.toggleVisibility);
 
-// Thống kê
-router.get('/stats/overview', a.overview);
-router.get('/stats/revenue', a.revenue);
+// ===== Chỉ quản trị viên =====
+router.get('/users', isAdmin, a.listUsers);
+router.get('/users/:id', isAdmin, a.getUser);
+router.patch('/users/:id/status', isAdmin, a.toggleUserStatus);
+router.patch('/users/:id/role', isAdmin, a.changeUserRole);
+router.get('/stats/revenue', isAdmin, a.revenue);
 
 module.exports = router;

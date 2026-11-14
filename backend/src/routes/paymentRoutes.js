@@ -6,8 +6,6 @@ const { protect } = require('../middlewares/auth');
 // Danh sách phương thức thanh toán đang bật (giao diện dùng để hiển thị lựa chọn)
 router.get('/methods', (req, res) => res.json(enabledPaymentMethods()));
 
-router.get('/vnpay-ipn', c.vnpayIpn);
-router.get('/vnpay-return', c.vnpayReturn);
 router.post('/momo-ipn', c.momoIpn);
 router.get('/momo-return', c.momoReturn);
 

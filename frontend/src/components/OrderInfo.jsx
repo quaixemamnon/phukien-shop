@@ -34,6 +34,12 @@ export default function OrderInfo({ order, renderItemAction }) {
           {order.paymentInfo?.transactionId && <p className="small muted">Mã giao dịch: {order.paymentInfo.transactionId}</p>}
           <p className="small muted">Ngày đặt: {formatDate(order.createdAt)}</p>
           {order.cancelReason && <p className="bad-text">Lý do hủy: {order.cancelReason}</p>}
+          {order.orderStatus === 'cancelled' && order.paymentStatus === 'paid' && order.paymentMethod !== 'COD' && (
+            <p className="alert warn small">Đơn đã thanh toán qua MoMo nhưng bị hủy. Cửa hàng sẽ hoàn tiền cho khách.</p>
+          )}
+          {order.paymentStatus === 'refunded' && (
+            <p className="small muted">Đã hoàn tiền{order.paymentInfo?.refundedAt ? ` ngày ${formatDate(order.paymentInfo.refundedAt)}` : ''}.</p>
+          )}
           {order.note && <p>Ghi chú: {order.note}</p>}
         </section>
         <section className="card pad">

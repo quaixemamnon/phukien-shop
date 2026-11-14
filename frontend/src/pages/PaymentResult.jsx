@@ -4,7 +4,7 @@ import api, { errMsg } from '../api';
 import { useCart } from '../context/CartContext';
 import { formatPrice } from '../utils/format';
 
-// Trang khách quay về sau khi thanh toán VNPay / MoMo
+// Trang khách quay về sau khi thanh toán MoMo
 export default function PaymentResult({ gateway }) {
   const { search } = useLocation();
   const { fetchCart } = useCart();

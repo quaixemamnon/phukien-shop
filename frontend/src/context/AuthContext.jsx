@@ -44,7 +44,19 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, ready, login, logout, setUser: saveUser, isAdmin: user?.role === 'admin' }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        ready,
+        login,
+        logout,
+        setUser: saveUser,
+        isAdmin: user?.role === 'admin',
+        isStaff: user?.role === 'staff',
+        // Tài khoản nội bộ (nhân viên hoặc quản trị viên): vào trang quản trị, không mua hàng
+        isBackoffice: user?.role === 'admin' || user?.role === 'staff',
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

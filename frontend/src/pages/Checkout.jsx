@@ -44,7 +44,7 @@ export default function Checkout() {
     try {
       const { data } = await api.post('/orders', body);
       if (data.paymentUrl) {
-        window.location.href = data.paymentUrl; // chuyển sang VNPay / MoMo
+        window.location.href = data.paymentUrl; // chuyển sang cổng MoMo
         return;
       }
       await fetchCart();

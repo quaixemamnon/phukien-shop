@@ -79,6 +79,8 @@ input:disabled { background: var(--bg); }
 .alert.ok { background: var(--ok-soft); color: var(--ok); }
 .alert.warn { background: var(--warn-soft); color: var(--warn); }
 .alert.bad { background: var(--bad-soft); color: var(--bad); }
+.row-between { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.btn.small { padding: 4px 10px; font-size: 13px; }
 
 /* Header */
 .site-header { background: var(--surface); border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 20; }

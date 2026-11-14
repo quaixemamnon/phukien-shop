@@ -53,26 +53,26 @@ exports.createOrder = asyncHandler(async (req, res) => {
   });
 
   await order.validate();
-  if (paymentMethod === 'COD') {
-    const ok = await service.deductStock(order.items);
-    if (!ok) throw new ApiError(400, 'Một số sản phẩm vừa hết hàng, vui lòng kiểm tra lại giỏ hàng');
-    order.stockDeducted = true;
-    await order.save();
-    await service.clearCart(req.user._id);
-    await service.sendOrderEmail(order, 'Đặt hàng thành công');
-    return res.status(201).json({ order });
-  }
-
-  // Thanh toán online: tạo đơn trước, trừ kho khi thanh toán thành công
+  // Giữ hàng ngay khi đặt (cả COD và MoMo) để không bán vượt số lượng tồn.
+  // Đơn MoMo không thanh toán trong 30 phút sẽ tự hủy và hoàn lại kho.
+  const ok = await service.deductStock(order.items);
+  if (!ok) throw new ApiError(400, 'Một số sản phẩm vừa hết hàng, vui lòng kiểm tra lại giỏ hàng');
+  order.stockDeducted = true;
   await order.save();
-  let paymentUrl;
-  try {
-    paymentUrl = await service.createPaymentUrl(order, req);
-  } catch (err) {
-    // Không tạo được giao dịch -> xóa đơn vừa tạo (chưa trừ kho) để khách đặt lại
-    await order.deleteOne();
-    throw err;
+
+  let paymentUrl = null;
+  if (paymentMethod === 'MOMO') {
+    try {
+      paymentUrl = await service.createPaymentUrl(order);
+    } catch (err) {
+      // Không tạo được giao dịch -> trả hàng về kho, xóa đơn vừa tạo, giỏ hàng vẫn giữ nguyên để khách đặt lại
+      await service.restoreStock(order.items);
+      await order.deleteOne();
+      throw err;
+    }
   }
+  await service.clearCart(req.user._id);
+  if (paymentMethod === 'COD') await service.sendOrderEmail(order, 'Đặt hàng thành công');
   res.status(201).json({ order, paymentUrl });
 });
 
@@ -87,7 +87,8 @@ exports.getMyOrders = asyncHandler(async (req, res) => {
 exports.getOrderById = asyncHandler(async (req, res) => {
   const order = await Order.findById(req.params.id).populate('user', 'fullName email phone');
   const isOwner = order && order.user && String(order.user._id) === String(req.user._id);
-  if (!order || (!isOwner && req.user.role !== 'admin')) throw new ApiError(404, 'Không tìm thấy đơn hàng');
+  const isStaff = ['admin', 'staff'].includes(req.user.role);
+  if (!order || (!isOwner && !isStaff)) throw new ApiError(404, 'Không tìm thấy đơn hàng');
   res.json(order);
 });
 
@@ -96,7 +97,8 @@ exports.cancelMyOrder = asyncHandler(async (req, res) => {
   const order = await Order.findOne({ _id: req.params.id, user: req.user._id });
   if (!order) throw new ApiError(404, 'Không tìm thấy đơn hàng');
   if (order.orderStatus !== 'pending') throw new ApiError(400, 'Chỉ có thể hủy đơn hàng đang chờ xác nhận');
-  await service.cancelOrder(order, req.body.reason || 'Khách hàng hủy đơn', req.user._id);
+  const reason = String(req.body.reason || '').trim().slice(0, 200);
+  await service.cancelOrder(order, reason ? `Khách hàng hủy: ${reason}` : 'Khách hàng hủy đơn', req.user._id);
   res.json({ message: 'Đã hủy đơn hàng', order });
 });
 

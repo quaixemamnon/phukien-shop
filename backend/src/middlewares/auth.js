@@ -22,13 +22,16 @@ const protect = asyncHandler(async (req, res, next) => {
   next();
 });
 
-// Chỉ quản trị viên
-const isAdmin = (req, res, next) => {
-  if (!req.user || req.user.role !== 'admin') return next(new ApiError(403, 'Bạn không có quyền truy cập chức năng này'));
+// Chỉ cho phép các vai trò được liệt kê
+const allowRoles = (...roles) => (req, res, next) => {
+  if (!req.user || !roles.includes(req.user.role)) return next(new ApiError(403, 'Bạn không có quyền truy cập chức năng này'));
   next();
 };
+
+const isAdmin = allowRoles('admin'); // chỉ quản trị viên
+const isStaff = allowRoles('admin', 'staff'); // nhân viên hoặc quản trị viên
 
 const signToken = (user) =>
   jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES || '7d' });
 
-module.exports = { protect, isAdmin, signToken };
+module.exports = { protect, allowRoles, isAdmin, isStaff, signToken };

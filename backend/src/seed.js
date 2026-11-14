@@ -46,7 +46,7 @@ async function fullSeed() {
 
   await User.create({
     fullName: 'Quản trị viên',
-    email: process.env.SEED_ADMIN_EMAIL || 'admin@phukien.vn',
+    email: process.env.SEED_ADMIN_EMAIL || 'admin@kaydenstore.vn',
     password: process.env.SEED_ADMIN_PASSWORD || 'Admin@123',
     role: 'admin',
   });
@@ -75,13 +75,18 @@ async function fullSeed() {
   await seedSampleActivity();
 
   console.log('Đã tạo dữ liệu mẫu:');
-  console.log(`  Admin:      ${process.env.SEED_ADMIN_EMAIL || 'admin@phukien.vn'} / (SEED_ADMIN_PASSWORD trong .env)`);
+  console.log(`  Admin:      ${process.env.SEED_ADMIN_EMAIL || 'admin@kaydenstore.vn'} / (SEED_ADMIN_PASSWORD trong .env)`);
+  console.log(`  Nhân viên:  ${ACTIVITY.STAFF.email} / ${ACTIVITY.STAFF.password}`);
   console.log(`  Khách hàng: ${ACTIVITY.CUSTOMERS.map((c) => c.email).join(', ')} / ${ACTIVITY.PASSWORD}`);
 }
 
 // Khách hàng mẫu + đơn hàng đã giao + đánh giá mẫu (để trang sản phẩm, trang thống kê có dữ liệu khi demo)
 async function seedSampleActivity() {
   const DAY = 24 * 3600 * 1000;
+  const s = ACTIVITY.STAFF;
+  if (!(await User.exists({ email: s.email }))) {
+    await User.create({ fullName: s.fullName, email: s.email, phone: s.phone, password: s.password, role: 'staff' });
+  }
   const users = [];
   for (const c of ACTIVITY.CUSTOMERS) {
     let u = await User.findOne({ email: c.email });
